@@ -1,0 +1,68 @@
+ import { PermissionsAndroid, Alert, BackHandler } from "react-native";
+
+  async function gerenciarLogs(): Promise <boolean> {
+
+        setLoading('Atualizando logs... ');
+        //addLog('Atualizando logs... ');
+
+        try {
+            const granted = await PermissionsAndroid.request (
+                PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE, {
+                    title: "Permissão de escrita",
+                    message: "O HMS Suite necessita de permissão de acesso " +
+                                "na pasta Downloads.",
+                    buttonNegative: "Cancelar",
+                    buttonPositive: "OK"
+                }
+            );
+    
+            if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                let semPassada: Date = new Date();
+                semPassada.setDate(semPassada.getDate() - 7);
+        
+                let files = await readDir(DownloadDirectoryPath);
+                for(let f of files) {
+                    let data: Date = new Date(f.mtime);
+        
+                    if(data <= semPassada) {
+                        if(f.name.includes("log_")) {
+                            await unlink(f.path);
+                           // addLog("Apagado arquivo de log " + f.name);
+                        }
+                    }
+                }
+
+                //addLog("Iniciado sistema na versao " + pkg.version);
+
+                limparState();
+
+                setLoading('');
+                return true;
+
+            } else {
+                setLoading('');
+                Alert.alert(
+                    "ERRO",
+                    "A aplicação não pode continuar: Sem permissão de acesso!", 
+                    [
+                        {
+                            text: "Ok",
+                            onPress: () => { BackHandler.exitApp(); }
+                        }
+                    ]
+                );
+            }
+        } catch (e) {
+            setLoading('');
+            Alert.alert(
+                "ERRO",
+                "A aplicação não pode continuar: Sem permissão de acesso!", 
+                [
+                    {
+                        text: "Ok",
+                        onPress: () => { BackHandler.exitApp(); }
+                    }
+                ]
+            );
+        }
+    } 
